@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contratos Habitacionais</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #f0f2f5; }
+
+header {
+  background: #1a1a2e;
+  color: white;
+  padding: 20px 24px;
+}
+header h1 { font-size: 20px; }
+header p { font-size: 13px; color: #aaa; margin-top: 4px; }
+
+.search-box {
+  background: white;
+  padding: 20px 24px;
+  border-bottom: 2px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.search-box input {
+  width: 100%;
+  max-width: 600px;
+  padding: 14px 18px;
+  font-size: 16px;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  outline: none;
+}
+.search-box input:focus { border-color: #1a1a2e; }
+
+.search-box button {
+  margin-left: 10px;
+  padding: 14px 20px;
+  background: #1a1a2e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+}
+.search-box button:hover { background: #2d3748; }
+
+#status {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #555;
+  font-weight: bold;
+}
+
+.container { padding: 24px; }
+
+.resultado-card {
+  background: white;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  border-left: 5px solid #1a1a2e;
+}
+
+.resultado-card .topo {
+  background: #1a1a2e;
+  color: white;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 0.3px;
+}
+
+.resultado-card .corpo {
+  padding: 14px 18px;
+}
+
+.resultado-card .linha {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f2f5;
+  font-size: 15px;
+}
+.resultado-card .linha:last-child { border-bottom: none; }
+
+.resultado-card .nome { color: #1a1a2e; font-weight: 600; }
+.resultado-card .contrato {
+  font-family: monospace;
+  font-size: 14px;
+  color: #555;
+}
+.resultado-card .prateleira {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}
+
+.nao-encontrado {
+  text-align: center;
+  padding: 60px;
+  color: #999;
+  display: none;
+}
+.nao-encontrado p { font-size: 18px; margin-top: 10px; }
+
+mark { background: #fef08a; padding: 1px 3px; border-radius: 3px; }
+.novo-badge {
+  background: #22c55e;
+  color: white;
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🗂️ Contratos Habitacionais</h1>
+  <p>Digite um nome ou número de contrato para buscar</p>
+</header>
+
+<div class="search-box">
+  <input type="text" id="input-busca" placeholder="Ex: João Silva  ou  1.4444.0005786-0" />
+  <button onclick="buscar()">Buscar</button>
+  <button onclick="limpar()" style="background:#888;">Limpar</button>
+  <div id="status"></div>
+</div>
+
+<div class="container">
+  <div id="resultados"></div>
+  <div class="nao-encontrado" id="nao-encontrado">
+    <div style="font-size:50px">🔍</div>
+    <p>Nenhum registro encontrado.</p>
+    <small>Verifique a digitação e tente novamente.</small>
+  </div>
+</div>
+
+<script>
+var registros = [
+  // 1.0843 CAIXA 01 - 1ª Prateleira
+  {nome:"Ney César Moreira",contrato:"1.0843.0000014-2",caixa:"1.0843 — CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Alcides Volpato Carneiro de Castro",contrato:"1.0843.0000021-5",caixa:"1.0843 — CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Alessandro Heringer Milagres",contrato:"1.0843.0000022-3",caixa:"1.0843 — CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Roberto Eustaquio",contrato:"1.0843.0000023-1",caixa:"1.0843 — CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Roberto Marcio",contrato:"1.0843.0000025-8",caixa:"1.0843 — CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Fernando Lobo Vaz",contrato:"1.0843.0000026-6",caixa:"1.0843 — CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Jerferson Rodrigo de Paula",contrato:"1.0843.0000027-4",caixa:"1.0843 — CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Eduardo Jardel Portela",contrato:"1.0843.0000028-2",caixa:"1.0843 — CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Ricardo Shettino Regne",contrato:"1.0843.0000029-0",caixa:"1.0843 — CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Antônio dos Santos Reda",contrato:"1.0843.0000030-4",caixa:"1.0843 — CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Guilherme Xavier",contrato:"1.0843.0000031-2",caixa:"1.0843 — CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Alexander Leonild",contrato:"1.0843.0000032-0",caixa:"1.0843 — CAIXA 01",prateleira:"1ª Prateleira"},
+
+  // 1.0843 LIQUIDADOS CAIXA 01 - 1ª Prateleira
+  {nome:"Paulo Furtado da Silva",contrato:"1.0843.0000012-6",caixa:"1.0843 — LIQUIDADOS CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Elenice Louback Barros",contrato:"1.0843.0000033-9",caixa:"1.0843 — LIQUIDADOS CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Maria Helena Cano de Andrade",contrato:"1.0843.0000034-7",caixa:"1.0843 — LIQUIDADOS CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Marcos Vinicius Borges",contrato:"1.0843.0000035-5",caixa:"1.0843 — LIQUIDADOS CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Leise Kelli de Oliveira",contrato:"1.0843.0000036-3",caixa:"1.0843 — LIQUIDADOS CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Joaquim Fábio Texeira",contrato:"1.0843.0000037-0",caixa:"1.0843 — LIQUIDADOS CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Rodney Rezende Saldanha",contrato:"1.0843.0000038-0",caixa:"1.0843 — LIQUIDADOS CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Iracema Amaral dos Santos Melo",contrato:"1.0843.0000039-8",caixa:"1.0843 — LIQUIDADOS CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Adriano de Paula e Silva",contrato:"1.0843.0000040-1",caixa:"1.0843 — LIQUIDADOS CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Evandro Moraes da Gama",contrato:"7.0843.0000010-2",caixa:"1.0843 — LIQUIDADOS CAIXA 01",prateleira:"1ª Prateleira"},
+  {nome:"Arlene Maria Ribeiro da Cruz",contrato:"8.0843.0800010-7",caixa:"1.0843 — LIQUIDADOS CAIXA 01",prateleira:"1ª Prateleira"},
+
+  // 8.0843 LIQUIDADOS CAIXA 02 - 1ª Prateleira
+  {nome:"José Geraldo Bittencourt",contrato:"8.0843.0800014-0",caixa:"8.0843 — LIQUIDADOS CAIXA 02",prateleira:"1ª Prateleira"},
+  {nome:"Jaqueline Maria de Melo",contrato:"8.0843.0800021-2",caixa:"8.0843 — LIQUIDADOS CAIXA 02",prateleira:"1ª Prateleira"},
+  {nome:"Antônio Eustáquio Santos",contrato:"8.0843.0800030-1",caixa:"8.0843 — LIQUIDADOS CAIXA 02",prateleira:"1ª Prateleira"},
+  {nome:"Clélia Márcia Félix da Silva",contrato:"8.0843.0800039-5",caixa:"8.0843 — LIQUIDADOS CAIXA 02",prateleira:"1ª Prateleira"},
+  {nome:"Neide Francisca Barbosa",contrato:"8.0843.0800073-0",caixa:"8.0843 — LIQUIDADOS CAIXA 02",prateleira:"1ª Prateleira"},
+
+  // 4.0843 CAIXA 01 - 2ª Prateleira
+  {nome:"Ludmar Inácio Rodrigues",contrato:"4.0843.0000002-5",caixa:"4.0843 — CAIXA 01",prateleira:"2ª Prateleira"},
+  {nome:"Cléber Lúcio Bernadino",contrato:"4.0843.0000003-3",caixa:"4.0843 — CAIXA 01",prateleira:"2ª Prateleira"},
+  {nome:"Sérgio França Leão",contrato:"4.0843.0000005-0",caixa:"4.0843 — CAIXA 01",prateleira:"2ª Prateleira"},
+  {nome:"Paulo Antonio Couto Faria",contrato:"4.0843.0000006-8",caixa:"4.0843 — CAIXA 01",prateleira:"2ª Prateleira"},
+  {nome:"Almir Moreira dos Santos",contrato:"4.0843.0000007-6",caixa:"4.0843 — CAIXA 01",prateleira:"2ª Prateleira"},
+  {nome:"Adenauer Duarte de Oliveira",contrato:"4.0843.0000008-4",caixa:"4.0843 — CAIXA 01",prateleira:"2ª Prateleira"},
+  {nome:"Pedro Ge Acaiba de Azevedo Filho",contrato:"4.0843.0000009-2",caixa:"4.0843 — CAIXA 01",prateleira:"2ª Prateleira"},
+  {nome:"Maria da Conceição Mendes",contrato:"4.0843.0000010-6",caixa:"4.0843 — CAIXA 01",prateleira:"2ª Prateleira"},
+  {nome:"Paulo de Freitas",contrato:"4.0843.0000011-4",caixa:"4.0843 — CAIXA 01",prateleira:"2ª Prateleira"},
+  {nome:"Fabrizia Tavares Almeida Pena",contrato:"4.0843.0000012-2",caixa:"4.0843 — CAIXA 01",prateleira:"2ª Prateleira"},
+  {nome:"Carlos Alessandro da Silva Ferreira",contrato:"4.0843.0000013-0",caixa:"4.0843 — CAIXA 01",prateleira:"2ª Prateleira"},
+  {nome:"Angela de Aguiar Araújo",contrato:"4.0843.0000014-9",caixa:"4.0843 — CAIXA 01",prateleira:"2ª Prateleira"},
+  {nome:"João Brito Reis",contrato:"4.0843.0000015-7",caixa:"4.0843 — CAIXA 01",prateleira:"2ª Prateleira"},
+  {nome:"Fabrina Almeida Tavaresb",contrato:"4.0843.0000016-5",caixa:"4.0843 — CAIXA 01",prateleira:"2ª Prateleira"},
+  {nome:"José Alberto Cunha de Araújo",contrato:"4.0843.0000017-3",caixa:"4.0843 — CAIXA 01",prateleira:"2ª Prateleira"},
+  {nome:"Enzio de Melo Barbosa",contrato:"4.0843.0000018-1",caixa:"4.0843 — CAIXA 01",prateleira:"2ª Prateleira"},
+
+  // 1.4444 CAIXA 01 - 3ª Prateleira
+  {nome:"Rony Rossi Horta",contrato:"1.4444.0005786-0",caixa:"1.4444 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Ludmilla de Andrade Soares",contrato:"1.4444.0029961-8",caixa:"1.4444 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Claudia Fagundes Mourão",contrato:"1.4444.0031515-0",caixa:"1.4444 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Wanderlany Amacio Martins",contrato:"1.4444.0038749-5",caixa:"1.4444 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Alair Henrique Fernandes",contrato:"1.4444.0041715-7",caixa:"1.4444 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Danielle Cardoso de Menezes",contrato:"1.4444.0045515-6",caixa:"1.4444 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Breno Felipe Batista de Moura",contrato:"1.4444.0079938-6",caixa:"1.4444 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Claudio A. D. Rodrigues",contrato:"1.4444.0085650-9",caixa:"1.4444 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Carlos Henrique Rocha",contrato:"1.4444.0104662-4",caixa:"1.4444 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Alexandra Dias Melo",contrato:"1.4444.0106000-6",caixa:"1.4444 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Fabio Luiz Buranelo",contrato:"1.4444.0112605-9",caixa:"1.4444 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Marcos Vinicius Borges",contrato:"1.4444.0214804-8",caixa:"1.4444 — CAIXA 01",prateleira:"3ª Prateleira"},
+
+  // 1.4444 CAIXA 02 - 4ª Prateleira
+  {nome:"Aldo Giuntini D. Magalhães",contrato:"1.4444.0226831-0",caixa:"1.4444 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Sheila de Cássio Duarte",contrato:"1.4444.0261440-5",caixa:"1.4444 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Otavio Cardoso Duarte",contrato:"1.4444.0261819-2",caixa:"1.4444 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Leda Lucia Soares",contrato:"1.4444.0280344-5",caixa:"1.4444 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Geralda Dias Ruas",contrato:"1.4444.0284622-6",caixa:"1.4444 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Willian Giovane Barros",contrato:"1.4444.0291845-5",caixa:"1.4444 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Bruno Ruas Guedes",contrato:"1.4444.0307584-2",caixa:"1.4444 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Amanda dos Santos Reda de Souza",contrato:"1.4444.0416748-1",caixa:"1.4444 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Indurviges Martins Randolfo",contrato:"1.4444.0418616-8",caixa:"1.4444 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Taciana Toledo",contrato:"1.4444.0441422-5",caixa:"1.4444 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Regiane Carla Barros",contrato:"1.4444.0447122-9",caixa:"1.4444 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Silas Sepulvidas e Silva Junior",contrato:"1.4444.0531228-0",caixa:"1.4444 — CAIXA 02",prateleira:"4ª Prateleira"},
+
+  // 1.4444 CAIXA 03 - 2ª Prateleira
+  {nome:"João Duarte Laje",contrato:"1.4444.0982258-5",caixa:"1.4444 — CAIXA 03",prateleira:"2ª Prateleira"},
+  {nome:"Rejane Rodrigues Aguiar Oliveira",contrato:"1.4444.1079219-8",caixa:"1.4444 — CAIXA 03",prateleira:"2ª Prateleira"},
+  {nome:"Barbara Guimarães Rholfs",contrato:"1.4444.0441422-5",caixa:"1.4444 — CAIXA 03",prateleira:"2ª Prateleira"},
+  {nome:"Norma Rodrigues Abreu",contrato:"1.4444.0463040-8",caixa:"1.4444 — CAIXA 03",prateleira:"2ª Prateleira"},
+  {nome:"Hugo Leonardo Maia Ladeia",contrato:"1.4444.0481424-0",caixa:"1.4444 — CAIXA 03",prateleira:"2ª Prateleira"},
+  {nome:"Edwilson",contrato:"1.4444.0542087-3",caixa:"1.4444 — CAIXA 03",prateleira:"2ª Prateleira"},
+  {nome:"Erlane Aparecida Chagas",contrato:"1.4444.0622275-7",caixa:"1.4444 — CAIXA 03",prateleira:"2ª Prateleira"},
+  {nome:"Monica Rodrigues Pita",contrato:"1.4444.0737298-1",caixa:"1.4444 — CAIXA 03",prateleira:"2ª Prateleira"},
+  {nome:"Joaquim Santana S. Ferreira",contrato:"1.4444.0801247-4",caixa:"1.4444 — CAIXA 03",prateleira:"2ª Prateleira"},
+  {nome:"Lenin Martins Ferreira Moraes",contrato:"1.4444.0842520-5",caixa:"1.4444 — CAIXA 03",prateleira:"2ª Prateleira"},
+  {nome:"Michelle Cristia S. Lourenço",contrato:"1.4444.0941375-8",caixa:"1.4444 — CAIXA 03",prateleira:"2ª Prateleira"},
+  {nome:"Gessy Rodrigues Barbosa",contrato:"1.4444.0995408-2",caixa:"1.4444 — CAIXA 03",prateleira:"2ª Prateleira"},
+  {nome:"Cesar Rossas Mota Filho",contrato:"1.4444.1002231-7",caixa:"1.4444 — CAIXA 03",prateleira:"2ª Prateleira"},
+  {nome:"Maria Cecília Pereira de Faria",contrato:"1.4444.1034545-0",caixa:"1.4444 — CAIXA 03",prateleira:"2ª Prateleira"},
+  {nome:"Bruno Otavio Rocha Souza",contrato:"1.4444.1053237-4",caixa:"1.4444 — CAIXA 03",prateleira:"2ª Prateleira"},
+
+  // 1.4444 CAIXA 04 - 2ª Prateleira
+  {nome:"Fernanda Rocha Souza",contrato:"1.4444.1075704-0",caixa:"1.4444 — CAIXA 04",prateleira:"2ª Prateleira"},
+  {nome:"Rogene do Carmo Paula",contrato:"1.4444.1077691-5",caixa:"1.4444 — CAIXA 04",prateleira:"2ª Prateleira"},
+  {nome:"Vicente de Paula Soares",contrato:"1.4444.1090515-4",caixa:"1.4444 — CAIXA 04",prateleira:"2ª Prateleira"},
+  {nome:"Ariane Priscila Alves Diniz",contrato:"1.4444.1122101-1",caixa:"1.4444 — CAIXA 04",prateleira:"2ª Prateleira"},
+  {nome:"Julio Cesar Monteiro",contrato:"1.4444.1189446-6",caixa:"1.4444 — CAIXA 04",prateleira:"2ª Prateleira"},
+  {nome:"Bruno Flavio Pereira Cordeiro",contrato:"1.4444.1266422-7",caixa:"1.4444 — CAIXA 04",prateleira:"2ª Prateleira"},
+  {nome:"Dalton Andrade e Barros",contrato:"1.4444.1306181-0",caixa:"1.4444 — CAIXA 04",prateleira:"2ª Prateleira"},
+  {nome:"Rosângela de Fátima Fernandes",contrato:"1.4444.1346955-0",caixa:"1.4444 — CAIXA 04",prateleira:"2ª Prateleira"},
+  {nome:"Marco Aurélio Simões Pimenta",contrato:"1.4444.1380440-5",caixa:"1.4444 — CAIXA 04",prateleira:"2ª Prateleira"},
+  {nome:"David Augusto Lopes",contrato:"1.4444.1414443-3",caixa:"1.4444 — CAIXA 04",prateleira:"2ª Prateleira"},
+  {nome:"Cesar Augusto de Oliveira Soares",contrato:"1.4444.1903323-0",caixa:"1.4444 — CAIXA 04",prateleira:"2ª Prateleira"},
+  {nome:"Aline da Silva Galantine",contrato:"1.4444.2264375-3",caixa:"1.4444 — CAIXA 04",prateleira:"2ª Prateleira"},
+  {nome:"Dissiula de Carvalho Faria",contrato:"1.4444.2351723-9",caixa:"1.4444 — CAIXA 04",prateleira:"2ª Prateleira"},
+  {nome:"Esly Ferreira da Costa Junior",contrato:"1.4444.2369670-2",caixa:"1.4444 — CAIXA 04",prateleira:"2ª Prateleira"},
+  {nome:"Maria Fidencia G. Pereira",contrato:"1.4444.2365909-2",caixa:"1.4444 — CAIXA 04",prateleira:"2ª Prateleira"},
+  {nome:"Clesiane de Jesus Gervásio",contrato:"1.4444.2457107-5",caixa:"1.4444 — CAIXA 04",prateleira:"2ª Prateleira",novo:true},
+
+  // 1.5555 CAIXA 01 - 3ª Prateleira
+  {nome:"Maria Aparecida de Fatima Dutra",contrato:"1.5555.0142520-3",caixa:"1.5555 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Flavio Henrique Vasconcelos",contrato:"1.5555.0155486-0",caixa:"1.5555 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Roque Luiz da Silva Pitangueira",contrato:"1.5555.0180221-0",caixa:"1.5555 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Fernanda Rocha Souza",contrato:"1.5555.0708309-6",caixa:"1.5555 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Ricardo Miranda de Aguiar",contrato:"1.5555.0742574-4",caixa:"1.5555 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"William Giovanni Barros",contrato:"1.5555.0769149-5",caixa:"1.5555 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Adriana Cláudia dos Reis",contrato:"1.5555.1017124-3",caixa:"1.5555 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Andrea Antonacci",contrato:"1.5555.1164991-0",caixa:"1.5555 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Welligton Vaz Chaves",contrato:"1.5555.1227096-6",caixa:"1.5555 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Marcílio Martins Oliveira",contrato:"1.5555.1324992-8",caixa:"1.5555 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Flavio Eustaquio",contrato:"1.5555.1376861-5",caixa:"1.5555 — CAIXA 01",prateleira:"3ª Prateleira"},
+  {nome:"Décio Carmagos de Aguiar Junior",contrato:"1.5555.1395108-8",caixa:"1.5555 — CAIXA 01",prateleira:"3ª Prateleira"},
+
+  // 1.5555 CAIXA 02 - 3ª Prateleira
+  {nome:"Carolina Dellamore Batista Scarpelli",contrato:"1.5555.1159757-0",caixa:"1.5555 — CAIXA 02",prateleira:"3ª Prateleira"},
+  {nome:"Ewaldo Aggrippino Fraga de Aguiar Jr.",contrato:"1.5555.1408252-0",caixa:"1.5555 — CAIXA 02",prateleira:"3ª Prateleira"},
+  {nome:"Edna Diniz",contrato:"1.5555.1524377-3",caixa:"1.5555 — CAIXA 02",prateleira:"3ª Prateleira"},
+  {nome:"Marco Aurélio Caldeira Fuccio",contrato:"1.5555.1527920-4",caixa:"1.5555 — CAIXA 02",prateleira:"3ª Prateleira"},
+  {nome:"Paulo Cesar da Silva",contrato:"1.5555.1682438-9",caixa:"1.5555 — CAIXA 02",prateleira:"3ª Prateleira"},
+  {nome:"Sonia Denise Ferreira Rocha",contrato:"1.5555.1851053-5",caixa:"1.5555 — CAIXA 02",prateleira:"3ª Prateleira"},
+  {nome:"Claudia Regina Silva",contrato:"1.5555.1997546-9",caixa:"1.5555 — CAIXA 02",prateleira:"3ª Prateleira"},
+  {nome:"Weslley Guimarães de Melo",contrato:"1.5555.2117146-0",caixa:"1.5555 — CAIXA 02",prateleira:"3ª Prateleira"},
+  {nome:"Fernando Wagner dos Reis",contrato:"1.5555.2499214-7",caixa:"1.5555 — CAIXA 02",prateleira:"3ª Prateleira"},
+  {nome:"Maria Aparecida",contrato:"1.5555.3811817-7",caixa:"1.5555 — CAIXA 02",prateleira:"3ª Prateleira"},
+  {nome:"Sidelmo Magalhães Silva",contrato:"1.5555.3811817-7",caixa:"1.5555 — CAIXA 02",prateleira:"3ª Prateleira"},
+
+  // 8.0843 CAIXA 01 - 4ª Prateleira
+  {nome:"Nelio Eduardo Leite",contrato:"8.0843.0800002-6",caixa:"8.0843 — CAIXA 01",prateleira:"4ª Prateleira"},
+  {nome:"Antônio Carlos Domingos",contrato:"8.0843.0800009-3",caixa:"8.0843 — CAIXA 01",prateleira:"4ª Prateleira"},
+  {nome:"Arthur Luiz Ribeiro Cruz",contrato:"8.0843.0800011-5",caixa:"8.0843 — CAIXA 01",prateleira:"4ª Prateleira"},
+  {nome:"Mary das Graças Santos",contrato:"8.0843.0800013-1",caixa:"8.0843 — CAIXA 01",prateleira:"4ª Prateleira"},
+  {nome:"Telma Maria Gomes da Silva",contrato:"8.0843.0800018-2",caixa:"8.0843 — CAIXA 01",prateleira:"4ª Prateleira"},
+  {nome:"Maria de Fátima de Oliveira Miranda",contrato:"8.0843.0800022-0",caixa:"8.0843 — CAIXA 01",prateleira:"4ª Prateleira"},
+  {nome:"José da Silva Ramos",contrato:"8.0843.0800023-9",caixa:"8.0843 — CAIXA 01",prateleira:"4ª Prateleira"},
+  {nome:"Sérgio Silvio Evangelista",contrato:"8.0843.0800024-7",caixa:"8.0843 — CAIXA 01",prateleira:"4ª Prateleira"},
+  {nome:"Ellis Cristina de Oliveira",contrato:"8.0843.0800027-1",caixa:"8.0843 — CAIXA 01",prateleira:"4ª Prateleira"},
+  {nome:"André Luis Bellone Fonseca",contrato:"8.0843.0800029-8",caixa:"8.0843 — CAIXA 01",prateleira:"4ª Prateleira"},
+  {nome:"Marinalva Bispo de Jesus",contrato:"8.0843.0800032-8",caixa:"8.0843 — CAIXA 01",prateleira:"4ª Prateleira"},
+  {nome:"Eliezer Sampaio dos Santos Junior",contrato:"8.0843.0800033-6",caixa:"8.0843 — CAIXA 01",prateleira:"4ª Prateleira"},
+
+  // 8.0843 CAIXA 02 - 4ª Prateleira
+  {nome:"Rogério Diniz Medina",contrato:"8.0843.0800035-2",caixa:"8.0843 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Aloysius Alves Guimarães",contrato:"8.0843.0800036-0",caixa:"8.0843 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Maria das Dores Simões",contrato:"8.0843.0800037-9",caixa:"8.0843 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Geralda Ruas Guedes",contrato:"8.0843.0800038-7",caixa:"8.0843 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Dalva Amélia de Melo",contrato:"8.0843.0800040-9",caixa:"8.0843 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Josiane Furiati",contrato:"8.0843.0800041-7",caixa:"8.0843 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Wilson Benedito de Lucas",contrato:"8.0843.0800042-5",caixa:"8.0843 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Sidney Marcos Rodrigues Pereira",contrato:"8.0843.0800043-3",caixa:"8.0843 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Mateus Ângelo Soares da Fonseca",contrato:"8.0843.0800044-1",caixa:"8.0843 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Maria Elisa de Souza Oliveira",contrato:"8.0843.0800045-0",caixa:"8.0843 — CAIXA 02",prateleira:"4ª Prateleira"},
+  {nome:"Juscelino de Oliveira",contrato:"8.0843.0800310-6",caixa:"8.0843 — CAIXA 02",prateleira:"4ª Prateleira"},
+
+  // 8.4444 CAIXA 01 - 5ª Prateleira
+  {nome:"Claudinei Antonio dos Santos",contrato:"8.4444.0178581-6",caixa:"8.4444 — CAIXA 01",prateleira:"5ª Prateleira"},
+  {nome:"Reinaldo Silva Vidigal",contrato:"8.4444.0190815-2",caixa:"8.4444 — CAIXA 01",prateleira:"5ª Prateleira"},
+  {nome:"Polliano Alves Santana",contrato:"8.4444.0308519-6",caixa:"8.4444 — CAIXA 01",prateleira:"5ª Prateleira"},
+  {nome:"Vanessa Miranda Lima de Jesus",contrato:"8.4444.0312407-8",caixa:"8.4444 — CAIXA 01",prateleira:"5ª Prateleira"},
+  {nome:"Danilo Soares de Oliveira",contrato:"8.4444.0417406-6",caixa:"8.4444 — CAIXA 01",prateleira:"5ª Prateleira"},
+  {nome:"Rosana Couto Izaias",contrato:"8.4444.1025547-4",caixa:"8.4444 — CAIXA 01",prateleira:"5ª Prateleira"},
+  {nome:"Jonas Felício de Oliveira",contrato:"8.4444.1078299-5",caixa:"8.4444 — CAIXA 01",prateleira:"5ª Prateleira"},
+  {nome:"Luis Fernando de Novais",contrato:"8.4444.1085574-0",caixa:"8.4444 — CAIXA 01",prateleira:"5ª Prateleira"},
+  {nome:"Andre Silva Miranda",contrato:"8.4444.1099138-5",caixa:"8.4444 — CAIXA 01",prateleira:"5ª Prateleira"},
+  {nome:"Fabricio Passos M. de Lima",contrato:"8.4444.1151260-0",caixa:"8.4444 — CAIXA 01",prateleira:"5ª Prateleira"},
+  {nome:"Jaqueline de Fatima Martins Matos",contrato:"8.4444.1152753-4",caixa:"8.4444 — CAIXA 01",prateleira:"5ª Prateleira"},
+  {nome:"Halbert Marcio Penido",contrato:"8.4444.1241977-8",caixa:"8.4444 — CAIXA 01",prateleira:"5ª Prateleira"},
+  {nome:"Ana Paula G. da Cruz",contrato:"8.4444.1325344-0",caixa:"8.4444 — CAIXA 01",prateleira:"5ª Prateleira"},
+  {nome:"Antonia Elineide",contrato:"8.4444.1463573-7",caixa:"8.4444 — CAIXA 01",prateleira:"5ª Prateleira"},
+
+  // 8.4444 CAIXA 02 - 5ª Prateleira
+  {nome:"Danilo Reis Moreira",contrato:"8.4444.1328389-6",caixa:"8.4444 — CAIXA 02",prateleira:"5ª Prateleira"},
+  {nome:"Laucideia Fernade",contrato:"8.4444.1338914-7",caixa:"8.4444 — CAIXA 02",prateleira:"5ª Prateleira"},
+  {nome:"Leandro Magno Lopes Gonçalves",contrato:"8.4444.1354562-9",caixa:"8.4444 — CAIXA 02",prateleira:"5ª Prateleira"},
+  {nome:"Farley Rosa Jacinto",contrato:"8.4444.1408209-6",caixa:"8.4444 — CAIXA 02",prateleira:"5ª Prateleira"},
+  {nome:"Carolina Guimarães Matosinhos",contrato:"8.4444.1436716-3",caixa:"8.4444 — CAIXA 02",prateleira:"5ª Prateleira"},
+  {nome:"Valdimar Souza da Silva",contrato:"8.4444.1448043-0",caixa:"8.4444 — CAIXA 02",prateleira:"5ª Prateleira"},
+  {nome:"Andre Luiz da Cruz",contrato:"8.4444.1478031-1",caixa:"8.4444 — CAIXA 02",prateleira:"5ª Prateleira"},
+  {nome:"Fernanda Lucas Viana",contrato:"8.4444.1479239-5",caixa:"8.4444 — CAIXA 02",prateleira:"5ª Prateleira"},
+  {nome:"Valmir Brasil Tulher",contrato:"8.4444.1479367-4",caixa:"8.4444 — CAIXA 02",prateleira:"5ª Prateleira"},
+  {nome:"Andrea Ribeiro de Moura",contrato:"8.4444.1492295-7",caixa:"8.4444 — CAIXA 02",prateleira:"5ª Prateleira"},
+  {nome:"Meri Anne Andrade Pacheco",contrato:"8.4444.1492336-8",caixa:"8.4444 — CAIXA 02",prateleira:"5ª Prateleira"},
+  {nome:"Alexandre Jose de Souza Reis",contrato:"8.4444.1497669-0",caixa:"8.4444 — CAIXA 02",prateleira:"5ª Prateleira"},
+  {nome:"Washinton Emiliano Alves",contrato:"8.4444.1515918-8",caixa:"8.4444 — CAIXA 02",prateleira:"5ª Prateleira"},
+  {nome:"Nilma Ariane",contrato:"8.4444.1541112-3",caixa:"8.4444 — CAIXA 02",prateleira:"5ª Prateleira"},
+
+  // 8.4444 CAIXA 03 - 5ª Prateleira
+  {nome:"Jose Carlos Capuruco",contrato:"8.4444.1497669-0",caixa:"8.4444 — CAIXA 03",prateleira:"5ª Prateleira"},
+  {nome:"Alessandra Martins",contrato:"8.4444.1542630-2",caixa:"8.4444 — CAIXA 03",prateleira:"5ª Prateleira"},
+  {nome:"Patricia Cristina Borja",contrato:"8.4444.1546447-2",caixa:"8.4444 — CAIXA 03",prateleira:"5ª Prateleira"},
+  {nome:"Simone Cristina",contrato:"8.4444.1560080-5",caixa:"8.4444 — CAIXA 03",prateleira:"5ª Prateleira"},
+  {nome:"Ernany Alves da Silva",contrato:"8.4444.1578866-9",caixa:"8.4444 — CAIXA 03",prateleira:"5ª Prateleira"},
+  {nome:"Cleverson Ribeiro de Menezes",contrato:"8.4444.1590728-5",caixa:"8.4444 — CAIXA 03",prateleira:"5ª Prateleira"},
+  {nome:"Rita Alves Leandro Filho",contrato:"8.4444.1596112-3",caixa:"8.4444 — CAIXA 03",prateleira:"5ª Prateleira"},
+  {nome:"Liliane Trindade da Silva",contrato:"8.4444.1629294-2",caixa:"8.4444 — CAIXA 03",prateleira:"5ª Prateleira"},
+  {nome:"Ricardo Pardinho de Moura",contrato:"8.4444.1689863-8",caixa:"8.4444 — CAIXA 03",prateleira:"5ª Prateleira"},
+  {nome:"Alice Graciana Fraga Cearenso",contrato:"8.4444.1722829-6",caixa:"8.4444 — CAIXA 03",prateleira:"5ª Prateleira"},
+  {nome:"Ellen Santos de Moraes",contrato:"8.4444.1806404-1",caixa:"8.4444 — CAIXA 03",prateleira:"5ª Prateleira"},
+  {nome:"Thiago Henrique Salvo",contrato:"8.4444.1826336-2",caixa:"8.4444 — CAIXA 03",prateleira:"5ª Prateleira"},
+  {nome:"João Paulo das Graças",contrato:"8.4444.1844406-5",caixa:"8.4444 — CAIXA 03",prateleira:"5ª Prateleira"},
+  {nome:"Paulo Eduardo S. do Nascimento",contrato:"8.4444.1849199-3",caixa:"8.4444 — CAIXA 03",prateleira:"5ª Prateleira"},
+  {nome:"Paulo Alves Leandro Filho",contrato:"8.4444.1629294-2",caixa:"8.4444 — CAIXA 03",prateleira:"5ª Prateleira"},
+  {nome:"Liliane Trindade da Silva",contrato:"8.4444.1672826-0",caixa:"8.4444 — CAIXA 03",prateleira:"5ª Prateleira"},
+  {nome:"Felipe Denian Ribeiro de Souza",contrato:"8.4444.3710068-6",caixa:"8.4444 — CAIXA 03",prateleira:"5ª Prateleira",novo:true},
+
+  // 8.4444 e 8.5555 CAIXA 04 - 6ª Prateleira
+  {nome:"Warlley Atila dos Santos Oliveira",contrato:"8.4444.1894807-1",caixa:"8.4444 e 8.5555 — CAIXA 04",prateleira:"6ª Prateleira"},
+  {nome:"Rodington da Silva",contrato:"8.4444.1913294-6",caixa:"8.4444 e 8.5555 — CAIXA 04",prateleira:"6ª Prateleira"},
+  {nome:"Marco Paulo G. dos Santos",contrato:"8.4444.1923620-2",caixa:"8.4444 e 8.5555 — CAIXA 04",prateleira:"6ª Prateleira"},
+  {nome:"Valdivino Francisco Rodrigues",contrato:"8.4444.1930144-6",caixa:"8.4444 e 8.5555 — CAIXA 04",prateleira:"6ª Prateleira"},
+  {nome:"Wellington de Vasconcelos Silva",contrato:"8.4444.1931245-6",caixa:"8.4444 e 8.5555 — CAIXA 04",prateleira:"6ª Prateleira"},
+  {nome:"Danilo Guimares dos Santos",contrato:"8.4444.1942249-9",caixa:"8.4444 e 8.5555 — CAIXA 04",prateleira:"6ª Prateleira"},
+  {nome:"Sidinei Ferreira Neri",contrato:"8.4444.1944391-7",caixa:"8.4444 e 8.5555 — CAIXA 04",prateleira:"6ª Prateleira"},
+  {nome:"Emerson Araujo de Souza",contrato:"8.4444.1945896-5",caixa:"8.4444 e 8.5555 — CAIXA 04",prateleira:"6ª Prateleira"},
+  {nome:"Renato Neves Batista",contrato:"8.4444.2001479-0",caixa:"8.4444 e 8.5555 — CAIXA 04",prateleira:"6ª Prateleira"},
+  {nome:"Willian Batista Moreira",contrato:"8.4444.2016598-4",caixa:"8.4444 e 8.5555 — CAIXA 04",prateleira:"6ª Prateleira"},
+  {nome:"Farley Fabiano Souza Santos",contrato:"8.4444.2018086-0",caixa:"8.4444 e 8.5555 — CAIXA 04",prateleira:"6ª Prateleira"},
+  {nome:"Robero Junior Ignes de Oliveira",contrato:"8.4444.2022366-5",caixa:"8.4444 e 8.5555 — CAIXA 04",prateleira:"6ª Prateleira"},
+  {nome:"Ricardo Almeida Souza",contrato:"8.4444.2036584-3",caixa:"8.4444 e 8.5555 — CAIXA 04",prateleira:"6ª Prateleira"},
+  {nome:"Crislane de Belles Rosa Lucio",contrato:"8.4444.2045028-0",caixa:"8.4444 e 8.5555 — CAIXA 04",prateleira:"6ª Prateleira"},
+  {nome:"Rayanne Aryadna Ferreira",contrato:"8.4444.2259926-4",caixa:"8.4444 e 8.5555 — CAIXA 04",prateleira:"6ª Prateleira"},
+  {nome:"Eliane Louback Freitas",contrato:"8.5555.1547650-1",caixa:"8.4444 e 8.5555 — CAIXA 04",prateleira:"6ª Prateleira"},
+
+  // 8.4444 e 8.5555 CAIXA 05 - 6ª Prateleira
+  {nome:"Luiza Gomes Gonzaga",contrato:"8.4444.2146678-3",caixa:"8.4444 e 8.5555 — CAIXA 05",prateleira:"6ª Prateleira"},
+  {nome:"Karine Araujo dos Santos",contrato:"8.5555.0009189-0",caixa:"8.4444 e 8.5555 — CAIXA 05",prateleira:"6ª Prateleira"},
+  {nome:"Laura Maria Paes de Abreus",contrato:"8.5555.0137054-7",caixa:"8.4444 e 8.5555 — CAIXA 05",prateleira:"6ª Prateleira"},
+  {nome:"Norma Aparecida Gonçalves Pessoa",contrato:"8.5555.0610742-9",caixa:"8.4444 e 8.5555 — CAIXA 05",prateleira:"6ª Prateleira"},
+  {nome:"Ana Paula da Costa",contrato:"8.5555.0864019-1",caixa:"8.4444 e 8.5555 — CAIXA 05",prateleira:"6ª Prateleira"},
+  {nome:"Arthur Ricardo de Araujo",contrato:"8.5555.1214621-0",caixa:"8.4444 e 8.5555 — CAIXA 05",prateleira:"6ª Prateleira"},
+  {nome:"João Batista de Castro",contrato:"8.5555.1391849-6",caixa:"8.4444 e 8.5555 — CAIXA 05",prateleira:"6ª Prateleira"},
+  {nome:"Michelle Cristiane da Silva",contrato:"8.5555.1464091-2",caixa:"8.4444 e 8.5555 — CAIXA 05",prateleira:"6ª Prateleira"},
+  {nome:"Leonardo Carmo Freitas",contrato:"8.5555.2064248-4",caixa:"8.4444 e 8.5555 — CAIXA 05",prateleira:"6ª Prateleira"},
+  {nome:"Regiane Valeira",contrato:"8.5555.3569135-4",caixa:"8.4444 e 8.5555 — CAIXA 05",prateleira:"6ª Prateleira"},
+
+  // 4.5555 CAIXA 01 - 6ª Prateleira
+  {nome:"Geraldo Alves M. V. N. Batista",contrato:"4.5555.1152537-1",caixa:"4.5555 — CAIXA 01",prateleira:"6ª Prateleira"},
+  {nome:"Regiane Carla Barros",contrato:"4.5555.0437237-9",caixa:"4.5555 — CAIXA 01",prateleira:"6ª Prateleira"},
+  {nome:"Glaucia Fatima de Barros",contrato:"4.5555.0336533-6",caixa:"4.5555 — CAIXA 01",prateleira:"6ª Prateleira"},
+];
+
+function normalizar(str) {
+  return str.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+}
+
+function highlight(texto, termo) {
+  if (!termo) return texto;
+  var re = new RegExp('(' + termo.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+  return texto.replace(re, '<mark>$1</mark>');
+}
+
+function buscar() {
+  var termo = document.getElementById('input-busca').value.trim();
+  var termoNorm = normalizar(termo);
+  var termoSemPontos = termo.replace(/[.\-]/g,'').toLowerCase();
+
+  var resultados = document.getElementById('resultados');
+  var naoEncontrado = document.getElementById('nao-encontrado');
+  var status = document.getElementById('status');
+
+  if (!termo) {
+    resultados.innerHTML = '';
+    naoEncontrado.style.display = 'none';
+    status.innerHTML = '';
+    return;
+  }
+
+  var encontrados = registros.filter(function(r) {
+    var nomeNorm = normalizar(r.nome);
+    var contratoSemPontos = r.contrato.replace(/[.\-]/g,'').toLowerCase();
+    return nomeNorm.includes(termoNorm) || contratoSemPontos.includes(termoSemPontos);
+  });
+
+  if (encontrados.length === 0) {
+    resultados.innerHTML = '';
+    naoEncontrado.style.display = 'block';
+    status.innerHTML = '❌ Nenhum resultado para: <strong>' + termo + '</strong>';
+    return;
+  }
+
+  naoEncontrado.style.display = 'none';
+  status.innerHTML = '✅ ' + encontrados.length + ' resultado(s) encontrado(s) para: <strong>' + termo + '</strong>';
+
+  var html = '';
+  encontrados.forEach(function(r) {
+    html += '<div class="resultado-card">'
+      + '<div class="topo">📦 ' + r.caixa + ' &nbsp;|&nbsp; 🗄️ ' + r.prateleira + '</div>'
+      + '<div class="corpo">'
+      + '<div class="linha">'
+      + '<span class="nome">' + highlight(r.nome, termo) + (r.novo ? '<span class="novo-badge">NOVO</span>' : '') + '</span>'
+      + '<span class="contrato">' + highlight(r.contrato, termo) + '</span>'
+      + '</div>'
+      + '</div></div>';
+  });
+
+  resultados.innerHTML = html;
+}
+
+function limpar() {
+  document.getElementById('input-busca').value = '';
+  document.getElementById('resultados').innerHTML = '';
+  document.getElementById('nao-encontrado').style.display = 'none';
+  document.getElementById('status').innerHTML = '';
+  document.getElementById('input-busca').focus();
+}
+
+document.getElementById('input-busca').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') buscar();
+});
+</script>
+</body>
+</html>
